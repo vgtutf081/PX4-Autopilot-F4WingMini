@@ -233,7 +233,7 @@ stm32_boardinitialize(void)
 
 static struct spi_dev_s *spi1;
 static struct spi_dev_s *spi2;
-// static struct spi_dev_s *spi3;
+static struct spi_dev_s *spi3;
 
 __EXPORT int board_read_VBUS_state(void)
 {
@@ -284,26 +284,24 @@ __EXPORT int board_app_initialize(uintptr_t arg)
 
 	// SPI2: SDCard
 	/* Get the SPI port for the microSD slot */
-	// spi3 = stm32_spibus_initialize(3);
+	spi3 = stm32_spibus_initialize(3);
 
-	// if (!spi3) {
-	// 	syslog(LOG_ERR, "[boot] FAILED to initialize SPI port %d\n", CONFIG_NSH_MMCSDSPIPORTNO);
-	// 	led_on(LED_BLUE);
-	// 	return -ENODEV;
-	// }
+	if (!spi3) {
+		syslog(LOG_ERR, "[boot] FAILED to initialize SPI port %d\n", CONFIG_NSH_MMCSDSPIPORTNO);
+		led_on(LED_BLUE);
+		return -ENODEV;
+	}
 
 	/* Now bind the SPI interface to the MMCSD driver */
-	// int result = mmcsd_spislotinitialize(CONFIG_NSH_MMCSDMINOR, CONFIG_NSH_MMCSDSLOTNO, spi2);
+	int result = mmcsd_spislotinitialize(CONFIG_NSH_MMCSDMINOR, CONFIG_NSH_MMCSDSLOTNO, spi3);
 
-	// if (result != OK) {
-	// 	led_on(LED_BLUE);
-	// 	syslog(LOG_ERR, "[boot] FAILED to bind SPI port 2 to the MMCSD driver\n");
-	// 	return -ENODEV;
-	// }
+	if (result != OK) {
+		led_on(LED_BLUE);
+		syslog(LOG_ERR, "[boot] FAILED to bind SPI port 3 to the MMCSD driver\n");
+		return -ENODEV;
+	}
 
-	// up_udelay(20);
-
-	int result;
+	up_udelay(20);
 
 	// SPI3: OSD / Baro
 	spi2 = stm32_spibus_initialize(2);
