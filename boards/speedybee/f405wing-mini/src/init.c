@@ -167,7 +167,7 @@ stm32_boardinitialize(void)
 	stm32_configgpio(GPIO_ADC1_IN10);	/* BATT_VOLTAGE_SENS */
 	stm32_configgpio(GPIO_ADC1_IN11);	/* BATT_CURRENT_SENS */
 	stm32_configgpio(GPIO_ADC1_IN14);	/* RSSI*/
-	stm32_configgpio(GPIO_ADC1_IN15);	/* arispeed*/
+	//stm32_configgpio(GPIO_ADC1_IN15);	/* arispeed*/
 
 	// TODO: power peripherals
 	///* configure power supply control/sense pins */
@@ -232,7 +232,7 @@ stm32_boardinitialize(void)
  ****************************************************************************/
 
 static struct spi_dev_s *spi1;
-static struct spi_dev_s *spi2;
+// static struct spi_dev_s *spi2;
 static struct spi_dev_s *spi3;
 
 __EXPORT int board_read_VBUS_state(void)
@@ -284,6 +284,28 @@ __EXPORT int board_app_initialize(uintptr_t arg)
 
 	// SPI2: SDCard
 	/* Get the SPI port for the microSD slot */
+
+	// SPI3: OSD / Baro
+	// spi2 = stm32_spibus_initialize(2);
+
+	// if (!spi2) {
+	// 	syslog(LOG_ERR, "[boot] FAILED to initialize SPI port 2\n");
+	// 	led_on(LED_BLUE);
+	// 	return -ENODEV;
+	// }
+
+	// /* Copied from fmu-v4
+	//  * Default SPI3 to 12MHz and de-assert the known chip selects.
+	//  * MS5611 has max SPI clock speed of 20MHz
+	//  */
+
+	// // BMP280 max SPI speed is 10 MHz
+	// SPI_SETFREQUENCY(spi2, 10 * 1000 * 1000);
+	// SPI_SETBITS(spi2, 8);
+	// SPI_SETMODE(spi2, SPIDEV_MODE3);
+
+	// up_udelay(20);
+
 	spi3 = stm32_spibus_initialize(3);
 
 	if (!spi3) {
@@ -297,30 +319,10 @@ __EXPORT int board_app_initialize(uintptr_t arg)
 
 	if (result != OK) {
 		led_on(LED_BLUE);
-		syslog(LOG_ERR, "[boot] FAILED to bind SPI port 3 to the MMCSD driver\n");
+		syslog(LOG_ERR, "[boot] FAILED to bind SPI port 2 to the MMCSD driver\n");
 		return -ENODEV;
 	}
 
-	up_udelay(20);
-
-	// SPI3: OSD / Baro
-	spi2 = stm32_spibus_initialize(2);
-
-	if (!spi2) {
-		syslog(LOG_ERR, "[boot] FAILED to initialize SPI port 3\n");
-		led_on(LED_BLUE);
-		return -ENODEV;
-	}
-
-	/* Copied from fmu-v4
-	 * Default SPI3 to 12MHz and de-assert the known chip selects.
-	 * MS5611 has max SPI clock speed of 20MHz
-	 */
-
-	// BMP280 max SPI speed is 10 MHz
-	SPI_SETFREQUENCY(spi2, 10 * 1000 * 1000);
-	SPI_SETBITS(spi2, 8);
-	SPI_SETMODE(spi2, SPIDEV_MODE0);
 	up_udelay(20);
 
 #if defined(FLASH_BASED_PARAMS)
@@ -335,7 +337,6 @@ __EXPORT int board_app_initialize(uintptr_t arg)
 	if (result != OK) {
 		syslog(LOG_ERR, "[boot] FAILED to init params in FLASH %d\n", result);
 		led_on(LED_AMBER);
-		return -ENODEV;
 	}
 
 #endif
